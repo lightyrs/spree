@@ -108,7 +108,7 @@ module Spree
         end
 
         def product_includes
-         [{:variants => [:images, {:option_values => :option_type}]}, {:master => [:images, :default_price]}]
+          [{ :variants => [:images, { :option_values => :option_type }], :master => [:images, :default_price]}]
         end
 
     end

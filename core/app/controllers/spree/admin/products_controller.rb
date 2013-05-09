@@ -84,27 +84,6 @@ module Spree
 
           @search = super.ransack(params[:q])
           @collection = @search.result.
-            group_by_products_id.
-            includes(product_includes).
-            page(params[:page]).
-            per(Spree::Config[:admin_products_per_page])
-
-          if params[:q][:s].include?("master_default_price_amount")
-            # PostgreSQL compatibility
-            @collection = @collection.group("spree_prices.amount")
-          end
-          @collection
-        end
-
-        def collection
-          return @collection if @collection.present?
-          params[:q] ||= {}
-          params[:q][:deleted_at_null] ||= "1"
-
-          params[:q][:s] ||= "name asc"
-
-          @search = super.ransack(params[:q])
-          @collection = @search.result.
                 distinct_by_product_ids(params[:q][:s]).
                 includes(product_includes).
                 page(params[:page]).
@@ -125,9 +104,8 @@ module Spree
         end
 
         def product_includes
-         [{:master => [:images, :default_price]}]
+          [{ :variants => [:images, { :option_values => :option_type }], :master => [:images, :default_price]}]
         end
-
     end
   end
 end

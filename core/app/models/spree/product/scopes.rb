@@ -50,7 +50,7 @@ module Spree
     # If you need products only within one taxon use
     #
     #   Spree::Product.taxons_id_eq(x)
-    # 
+    #
     # If you're using count on the result of this scope, you must use the
     # `:distinct` option as well:
     #
@@ -211,14 +211,21 @@ module Spree
       group("spree_products.id").joins(:taxons).where(Taxon.arel_table[:name].eq(name))
     end
 
-    if (ActiveRecord::Base.connection.adapter_name == 'PostgreSQL')
-      if table_exists?
-        scope :group_by_products_id, { :group => column_names.map { |col_name| "#{table_name}.#{col_name}"} }
+    def self.distinct_by_product_ids(sort_order=nil)
+      if (ActiveRecord::Base.connection.adapter_name == 'PostgreSQL')
+        sort_column = sort_order.split(" ").first
+        # Don't allow sort_column, a variable coming from params,
+        # to be anything but a column in the database
+        if column_names.include?(sort_column)
+          distinct_fields = ["id", sort_column].compact.join(",")
+          select("DISTINCT ON(#{distinct_fields}) spree_products.*")
+        else
+          scoped
+        end
+      else
+        select("DISTINCT spree_products.*")
       end
-    else
-      scope :group_by_products_id, { :group => "#{self.quoted_table_name}.id" }
     end
-    search_scopes << :group_by_products_id
 
     private
 

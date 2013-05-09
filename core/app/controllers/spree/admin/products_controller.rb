@@ -96,6 +96,23 @@ module Spree
           @collection
         end
 
+        def collection
+          return @collection if @collection.present?
+          params[:q] ||= {}
+          params[:q][:deleted_at_null] ||= "1"
+
+          params[:q][:s] ||= "name asc"
+
+          @search = super.ransack(params[:q])
+          @collection = @search.result.
+                distinct_by_product_ids(params[:q][:s]).
+                includes(product_includes).
+                page(params[:page]).
+                per(Spree::Config[:admin_products_per_page])
+
+          @collection
+        end
+
         def create_before
           return if params[:product][:prototype_id].blank?
           @prototype = Spree::Prototype.find(params[:product][:prototype_id])
@@ -108,7 +125,7 @@ module Spree
         end
 
         def product_includes
-         [{:variants => [:images, {:option_values => :option_type}]}, {:master => [:images, :default_price]}]
+         [{:master => [:images, :default_price]}]
         end
 
     end
